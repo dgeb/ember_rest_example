@@ -1,0 +1,1 @@
+App = Em.Application.create();

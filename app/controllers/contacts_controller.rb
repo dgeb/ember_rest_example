@@ -38,7 +38,7 @@ class ContactsController < ApplicationController
 
     respond_to do |format|
       if @contact.update_attributes(params[:contact])
-        format.json { head :ok }
+        format.json { render json: nil, status: :ok }
       else
         format.json { render json: @contact.errors, status: :unprocessable_entity }
       end
@@ -51,7 +51,7 @@ class ContactsController < ApplicationController
     @contact.destroy
 
     respond_to do |format|
-      format.json { head :ok }
+      format.json { render json: nil, status: :ok }
     end
   end
 end
