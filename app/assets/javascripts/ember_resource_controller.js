@@ -1,6 +1,16 @@
+// A controller for RESTful resources
+//
+// Override this controller and include the following:
+//
+// * `type` -- an Ember.Object class; the class must have a 'data' property that
+//      returns a json representation of the object
+// * `url` -- the base url of the resource (e.g. '/contacts')
+// * `resourceUrl` -- (optional) overrides `url` with a url to individual resources
+//      in this collection (e.g. '/contacts/%@'). Set this property if individual resources
+//      can not be found at `url/id`.
 Ember.ResourceController = Ember.ArrayController.extend({
-  type: Ember.required(),
-
+  url:     Ember.required(),
+  type:    Ember.required(),
   content: [],
 
   load: function(json) {
@@ -15,7 +25,7 @@ Ember.ResourceController = Ember.ArrayController.extend({
   findAll: function() {
     var self = this;
 
-    jQuery.getJSON(this._collectionUrl(), function(data) {
+    jQuery.getJSON(this.url, function(data) {
       self.set("content", []);
       self.loadAll(data);
     });
@@ -23,7 +33,7 @@ Ember.ResourceController = Ember.ArrayController.extend({
 
   updateResource: function(resource) {
     return jQuery.ajax({
-      url: this._resourceUrl().fmt(resource.get('id')),
+      url: this._resourceUrl(resource.get('id')),
       data: resource.get('data'),
       dataType: 'json',
       type: 'PUT'
@@ -34,7 +44,7 @@ Ember.ResourceController = Ember.ArrayController.extend({
     var self = this;
 
     return jQuery.ajax({
-      url: this._collectionUrl(),
+      url: this._resourceUrl(''),
       data: resource.get('data'),
       dataType: 'json',
       type: 'POST',
@@ -46,24 +56,17 @@ Ember.ResourceController = Ember.ArrayController.extend({
     var self = this;
 
     return jQuery.ajax({
-      url: this._resourceUrl().fmt(resource.get('id')),
+      url: this._resourceUrl(resource.get('id')),
       dataType: 'json',
       type: 'DELETE',
       success: function() { self.removeObject(resource); }
     });
   },
 
-  _collectionUrl: function() {
-    if (this.collectionUrl !== undefined)
-      return this.collectionUrl;
-    else
-      return this.url;
-  },
-
-  _resourceUrl: function() {
-    if (this.resourceUrl !== undefined)
-      return this.resourceUrl;
-    else
-      return this._collectionUrl() + '/%@';
+  _resourceUrl: function(id) {
+    var resourceUrl = this.resourceUrl;
+    if (resourceUrl === undefined)
+      resourceUrl = this.url + '/%@';
+    return resourceUrl.fmt(id);
   }
 });
