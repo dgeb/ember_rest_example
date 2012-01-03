@@ -1,17 +1,32 @@
+// A model class for RESTful resources
+Ember.Resource = Ember.Object.extend({
+  name:       Ember.required(),
+  properties: Ember.required(),
+  url:        Ember.required(),
+
+  data: function() {
+    var ret = {},
+        prop;
+
+    ret[this.name] = {};
+    for(var i = 0; i < this.properties.length; i++) {
+      prop = this.properties[i];
+      ret[this.name][prop] = this.get(prop);
+    }
+    return ret;
+  }
+});
+
 // A controller for RESTful resources
 //
 // Override this controller and include the following:
 //
-// * `type` -- an Ember.Object class; the class must have a 'data' property that
+// * `type` -- an Ember.Resource class; the class must have a 'data' property that
 //      returns a json representation of the object
-// * `url` -- the base url of the resource (e.g. '/contacts')
-// * `resourceUrl` -- (optional) overrides `url` with a url to individual resources
-//      in this collection (e.g. '/contacts/%@'). Set this property if individual resources
-//      can not be found at `url/id`.
+// * `url` -- (optional) the base url of the resource (e.g. '/contacts')
 Ember.ResourceController = Ember.ArrayController.extend({
-  url:     Ember.required(),
-  type:    Ember.required(),
-  content: [],
+  type:     Ember.required(),
+  content:  [],
 
   load: function(json) {
     this.pushObject(this.get('type').create(json));
@@ -34,7 +49,7 @@ Ember.ResourceController = Ember.ArrayController.extend({
   updateResource: function(resource) {
     return jQuery.ajax({
       url: this._resourceUrl(resource.get('id')),
-      data: resource.get('data'),
+      data: resource.data(),
       dataType: 'json',
       type: 'PUT'
     });
@@ -45,7 +60,7 @@ Ember.ResourceController = Ember.ArrayController.extend({
 
     return jQuery.ajax({
       url: this._resourceUrl(''),
-      data: resource.get('data'),
+      data: resource.data(),
       dataType: 'json',
       type: 'POST',
       success: function(data) { self.load(data); }
@@ -63,10 +78,15 @@ Ember.ResourceController = Ember.ArrayController.extend({
     });
   },
 
+  _url: function() {
+    if (this.url === undefined)
+      return this.get('type').prototype.url;
+    else
+      return this.url;
+  },
+
   _resourceUrl: function(id) {
-    var resourceUrl = this.resourceUrl;
-    if (resourceUrl === undefined)
-      resourceUrl = this.url + '/%@';
-    return resourceUrl.fmt(id);
+    var typeUrl = this.get('type').prototype.url;
+    return (typeUrl !== undefined ? typeUrl : this.url) + '/' + id;
   }
 });

@@ -1,12 +1,11 @@
-App.Contact  = Em.Object.extend({
-  fullName: Em.computed(function() {
-    return this.get('first_name') + ' ' + this.get('last_name');
-  }).property('first_name', 'last_name'),
+App.Contact  = Ember.Resource.extend({
+  url:        '/contacts',
+  name:       'contact',
+  properties: ['first_name', 'last_name'],
 
-  data: Em.computed(function() {
-    return {contact: {first_name: this.get('first_name'),
-                      last_name: this.get('last_name')}};
-  })
+  fullName: Ember.computed(function() {
+    return this.get('first_name') + ' ' + this.get('last_name');
+  }).property('first_name', 'last_name')
 });
 
 App.Contact.reopenClass({
