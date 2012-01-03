@@ -2468,6 +2468,11 @@ Ember.getPath = function(root, path) {
   var hasThis, hasStar, isGlobal;
   
   if (!path && 'string'===typeof root) {
+    // Helpers that operate with 'this' within an #each
+    if (path === '') {
+      return root;
+    }
+
     path = root;
     root = null;
   }
@@ -12824,6 +12829,10 @@ Ember.CollectionView = Ember.ContainerView.extend(
     var itemViewClass = get(this, 'itemViewClass'),
         childViews = get(this, 'childViews'),
         addedViews = [], view, item, idx, len, itemTagName;
+
+    if ('string' === typeof itemViewClass) {
+      itemViewClass = Ember.getPath(itemViewClass);
+    }
 
     ember_assert(fmt("itemViewClass must be a subclass of Ember.View, not %@", [itemViewClass]), Ember.View.detect(itemViewClass));
 
