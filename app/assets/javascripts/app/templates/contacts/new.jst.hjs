@@ -1,9 +1,3 @@
-<td></td>
-<td>
-  <form>
-    {{textField first_name}}
-    {{textField last_name}}
-    <button type="submit">Create</button>
-  </form>
-</td>
-<td></td>
+{{textField first_name}}
+{{textField last_name}}
+<button type="submit">Create</button>

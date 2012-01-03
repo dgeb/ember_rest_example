@@ -1,10 +1,7 @@
-App.EditContactView = Em.View.extend({
+App.EditContactView = Em.Form.extend({
   templateName: 'app/templates/contacts/edit',
-  tagName: 'form',
 
-  submit: function(evt) {
-    evt.preventDefault();
-
+  submitForm: function() {
     var data = {
       first_name: this.$().find("#first_name").val(),
       last_name: this.$().find("#last_name").val()
@@ -12,18 +9,19 @@ App.EditContactView = Em.View.extend({
     var valid = App.Contact.validateProperties(data);
 
     if (valid === true) {
-      var self = this;
+      // save the parentView so that this view can be hidden
+      // after saving this record
+      var parentView = this.get("parentView");
 
       var contact = this.get("contact");
+
       contact.setProperties(data);
+
       App.contactsController.updateResource(contact)
-        .done( function() {self.get("parentView").stopEditing();});
+        .done( function() { parentView.stopEditing(); });
     }
     else {
       alert(valid);
     }
-
-    // prevent event from bubbling up
-    return false;
   }
 });

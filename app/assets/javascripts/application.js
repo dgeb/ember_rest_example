@@ -7,8 +7,7 @@
 //= require jquery
 //= require jquery_ujs
 //= require ember
-//= require ember_resource_controller
-//= require ember_link
+//= require_tree ./lib
 //= require app
 //= require_tree ./app/models
 //= require_tree ./app/controllers
