@@ -14,6 +14,42 @@ Ember.Resource = Ember.Object.extend({
       ret[this.name][prop] = this.get(prop);
     }
     return ret;
+  },
+
+  save: function() {
+    var self = this,
+        isNew = (this.get('id') === undefined);
+
+    return jQuery.ajax({
+      url: this._url(),
+      data: this.data(),
+      dataType: 'json',
+      type: (isNew ? 'POST' : 'PUT'),
+      success: function(data) {
+        if (data)
+          self.setProperties(data);
+      }
+    });
+  },
+
+  destroy: function() {
+    var self = this;
+
+    return jQuery.ajax({
+      url: this._url(),
+      dataType: 'json',
+      type: 'DELETE'
+    });
+  },
+
+  _url: function() {
+    var url = this.url,
+        id = this.get('id');
+
+    if (id !== undefined)
+      return url + '/' + id;
+    else
+      return url;
   }
 });
 
@@ -37,45 +73,34 @@ Ember.ResourceController = Ember.ArrayController.extend({
       this.load(jsonArray[i]);
   },
 
-  findAll: function() {
+  refresh: function() {
     var self = this;
 
-    jQuery.getJSON(this.url, function(data) {
+    jQuery.getJSON(this._url(), function(data) {
       self.set("content", []);
       self.loadAll(data);
     });
   },
 
-  updateResource: function(resource) {
-    return jQuery.ajax({
-      url: this._resourceUrl(resource.get('id')),
-      data: resource.data(),
-      dataType: 'json',
-      type: 'PUT'
-    });
+  create: function(data) {
+    var self = this;
+    var resource = this.get('type').create(data);
+
+    return resource
+      .save()
+      .done(function() {
+        self.pushObject(resource);
+      });
   },
 
-  createResource: function(resource) {
+  destroy: function(resource) {
     var self = this;
 
-    return jQuery.ajax({
-      url: this._resourceUrl(''),
-      data: resource.data(),
-      dataType: 'json',
-      type: 'POST',
-      success: function(data) { self.load(data); }
-    });
-  },
-
-  destroyResource: function(resource) {
-    var self = this;
-
-    return jQuery.ajax({
-      url: this._resourceUrl(resource.get('id')),
-      dataType: 'json',
-      type: 'DELETE',
-      success: function() { self.removeObject(resource); }
-    });
+    return resource
+      .destroy()
+      .done(function() {
+        self.removeObject(resource);
+      });
   },
 
   _url: function() {
@@ -83,10 +108,5 @@ Ember.ResourceController = Ember.ArrayController.extend({
       return this.get('type').prototype.url;
     else
       return this.url;
-  },
-
-  _resourceUrl: function(id) {
-    var typeUrl = this.get('type').prototype.url;
-    return (typeUrl !== undefined ? typeUrl : this.url) + '/' + id;
   }
 });

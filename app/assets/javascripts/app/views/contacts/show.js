@@ -17,7 +17,6 @@ App.ShowContactView = Em.View.extend({
   },
 
   destroyRecord: function() {
-    var contact = this.get("contact");
-    App.contactsController.destroyResource(contact);
+    App.contactsController.destroy(this.get("contact"));
   }
 });

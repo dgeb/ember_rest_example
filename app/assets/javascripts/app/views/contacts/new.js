@@ -13,10 +13,10 @@ App.NewContactView = Em.Form.extend({
       // after saving this record
       var parentView = this.get("parentView");
 
-      var contact = App.Contact.create(data);
-
-      App.contactsController.createResource(contact)
-        .done(function() { parentView.set('showNew', false) });
+      App.contactsController.create(data)
+        .done(function() {
+          parentView.set('showNew', false)
+        });
     }
     else {
       alert(valid);

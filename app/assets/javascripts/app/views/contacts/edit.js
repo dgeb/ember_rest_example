@@ -13,12 +13,12 @@ App.EditContactView = Em.Form.extend({
       // after saving this record
       var parentView = this.get("parentView");
 
-      var contact = this.get("contact");
-
-      contact.setProperties(data);
-
-      App.contactsController.updateResource(contact)
-        .done( function() { parentView.stopEditing(); });
+      this.get("contact")
+        .setProperties(data)
+        .save()
+        .done( function() {
+          parentView.stopEditing();
+        });
     }
     else {
       alert(valid);
