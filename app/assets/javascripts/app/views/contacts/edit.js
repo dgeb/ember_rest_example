@@ -6,11 +6,11 @@ App.EditContactView = Em.Form.extend({
 
     this.get("contact")
       .update(this.serialize())
+        .fail( function(e) {
+          App.displayError(e);
+        })
         .done( function() {
           self.get("parentView").stopEditing();
-        })
-        .fail( function(e) {
-          alert(e);
         });
   }
 });

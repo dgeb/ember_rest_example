@@ -5,11 +5,11 @@ App.NewContactView = Em.Form.extend({
     var self = this;
 
     App.contactsController.create(this.serialize())
+      .fail( function(e) {
+        App.displayError(e);
+      })
       .done(function() {
         self.get("parentView").set('showNew', false)
-      })
-      .fail( function(e) {
-        alert(e);
       });
   }
 });
