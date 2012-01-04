@@ -1,5 +1,10 @@
 App.NewContactView = Ember.Form.extend({
-  templateName: 'app/templates/contacts/new',
+  templateName: 'app/templates/contacts/edit',
+
+  init: function() {
+    this.set("contact", App.Contact.create());
+    this._super();
+  },
 
   submitForm: function() {
     var self = this;
