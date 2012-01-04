@@ -2,22 +2,14 @@ App.NewContactView = Em.Form.extend({
   templateName: 'app/templates/contacts/new',
 
   submitForm: function() {
-    var data = this.serialize();
+    var self = this;
 
-    var valid = App.Contact.validateProperties(data);
-
-    if (valid === true) {
-      // save the parentView so that this view can be hidden
-      // after saving this record
-      var parentView = this.get("parentView");
-
-      App.contactsController.create(data)
-        .done(function() {
-          parentView.set('showNew', false)
-        });
-    }
-    else {
-      alert(valid);
-    }
+    App.contactsController.create(this.serialize())
+      .done(function() {
+        self.get("parentView").set('showNew', false)
+      })
+      .fail( function(e) {
+        alert(e);
+      });
   }
 });

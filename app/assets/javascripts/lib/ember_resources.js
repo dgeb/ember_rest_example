@@ -26,6 +26,20 @@ Ember.Resource = Ember.Object.extend({
     return ret;
   },
 
+  update: function(data) {
+    if (this.validate !== undefined) {
+      var error = this.validate(data);
+      if (error) {
+        return {
+          fail: function(f) { f(error); return this; },
+          done: function() { return this; },
+          always: function(f) { f(); return this; }
+        };
+      }
+    }
+    return this.setProperties(data).save();
+  },
+
   save: function() {
     var self = this,
         isNew = (this.get('id') === undefined);
@@ -85,7 +99,7 @@ Ember.ResourceController = Ember.ArrayController.extend({
       this.load(jsonArray[i]);
   },
 
-  refresh: function() {
+  findAll: function() {
     var self = this;
 
     jQuery.getJSON(this._url(), function(data) {
@@ -96,13 +110,13 @@ Ember.ResourceController = Ember.ArrayController.extend({
 
   create: function(data) {
     var self = this;
-    var resource = this.get('type').create(data);
+    var resource = this.get('type').create();
 
     return resource
-      .save()
-      .done(function() {
-        self.pushObject(resource);
-      });
+      .update(data)
+        .done(function() {
+          self.pushObject(resource);
+        });
   },
 
   destroy: function(resource) {

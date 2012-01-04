@@ -2,24 +2,15 @@ App.EditContactView = Em.Form.extend({
   templateName: 'app/templates/contacts/edit',
 
   submitForm: function() {
-    var data = this.serialize();
+    var self = this;
 
-    var valid = App.Contact.validateProperties(data);
-
-    if (valid === true) {
-      // save the parentView so that this view can be hidden
-      // after saving this record
-      var parentView = this.get("parentView");
-
-      this.get("contact")
-        .setProperties(data)
-        .save()
+    this.get("contact")
+      .update(this.serialize())
         .done( function() {
-          parentView.stopEditing();
+          self.get("parentView").stopEditing();
+        })
+        .fail( function(e) {
+          alert(e);
         });
-    }
-    else {
-      alert(valid);
-    }
   }
 });

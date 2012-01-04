@@ -7,6 +7,6 @@ App.ListContactsView = Em.View.extend({
   },
 
   refreshListing: function() {
-    App.contactsController.refresh();
+    App.contactsController.findAll();
   }
 });
