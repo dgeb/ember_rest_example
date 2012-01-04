@@ -1,4 +1,4 @@
-App.EditContactView = Em.Form.extend({
+App.EditContactView = Ember.Form.extend({
   templateName: 'app/templates/contacts/edit',
 
   submitForm: function() {

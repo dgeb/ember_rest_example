@@ -1,4 +1,4 @@
-App = Em.Application.create();
+App = Ember.Application.create();
 
 App.displayError = function(e) {
   if (typeof e === 'string') {
