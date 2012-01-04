@@ -1,4 +1,14 @@
 // A model class for RESTful resources
+//
+// Extend this class and define the following:
+//
+// * `name` -- the name used to contain the serialized data in this object's json
+//      representation
+// * `properties` -- an array of property names to be returned in this object's
+//      json representation
+// * `url` -- (optional) the base url of the resource (e.g. '/contacts/active');
+//      will default to the `url` for `type`
+//
 Ember.Resource = Ember.Object.extend({
   name:       Ember.required(),
   properties: Ember.required(),
@@ -55,11 +65,13 @@ Ember.Resource = Ember.Object.extend({
 
 // A controller for RESTful resources
 //
-// Override this controller and include the following:
+// Extend this class and define the following:
 //
 // * `type` -- an Ember.Resource class; the class must have a 'data' property that
 //      returns a json representation of the object
-// * `url` -- (optional) the base url of the resource (e.g. '/contacts')
+// * `url` -- (optional) the base url of the resource (e.g. '/contacts/active');
+//      will default to the `url` for `type`
+//
 Ember.ResourceController = Ember.ArrayController.extend({
   type:     Ember.required(),
   content:  [],
