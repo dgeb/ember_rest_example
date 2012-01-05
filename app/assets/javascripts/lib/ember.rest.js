@@ -63,12 +63,18 @@ Ember.Resource = Ember.Object.extend({
     this.set(prop, value);
   },
 
-  // Validate and then save a set of changes
+  // Create (if new) or update (if existing) record via ajax
   //
-  // Provide a `validate(userData)` method to perform validations.
-  update: function(userData) {
+  // Will call validate() if defined for this record
+  //
+  // If successful, updates this record's id and other properties
+  // by calling `deserialize()` with the data returned.
+  save: function() {
+    var self = this,
+        isNew = (this.get('id') === undefined);
+
     if (this.validate !== undefined) {
-      var error = this.validate(userData);
+      var error = this.validate();
       if (error) {
         return {
           fail: function(f) { f(error); return this; },
@@ -77,16 +83,6 @@ Ember.Resource = Ember.Object.extend({
         };
       }
     }
-    return this.setProperties(userData).save();
-  },
-
-  // Create (if new) or update (if existing) record via ajax
-  //
-  // If successful, updates this record's id and other properties
-  // by calling `deserialize()` with the data returned.
-  save: function() {
-    var self = this,
-        isNew = (this.get('id') === undefined);
 
     return jQuery.ajax({
       url: this._url(),
@@ -125,32 +121,42 @@ Ember.Resource = Ember.Object.extend({
   }
 });
 
-// A controller for RESTful resources
-//
-// Extend this class and define the following:
-//
-// * `type` -- an Ember.Resource class; the class must have a 'data' property that
-//      returns a json representation of the object
-// * `url` -- (optional) the base url of the resource (e.g. '/contacts/active');
-//      will default to the `url` for `type`
-//
+/**
+  @class
+  @extends Ember.ArrayController
+
+  A controller for RESTful resources
+
+  Extend this class and define the following:
+
+  * `type` -- an Ember.Resource class; the class must have a 'data' property that
+       returns a json representation of the object
+  * `url` -- (optional) the base url of the resource (e.g. '/contacts/active');
+       will default to the `url` for `type`
+*/
 Ember.ResourceController = Ember.ArrayController.extend({
   type:     Ember.required(),
   content:  [],
 
-  // Create and load a single `Ember.Resource` from JSON
+  /**
+    Create and load a single `Ember.Resource` from JSON
+  */
   load: function(json) {
     var resource = this.get('type').create().deserialize(json);
     this.pushObject(resource);
   },
 
-  // Create and load `Ember.Resource` objects from a JSON array
+  /**
+    Create and load `Ember.Resource` objects from a JSON array
+  */
   loadAll: function(json) {
     for (var i=0; i < json.length; i++)
       this.load(json[i]);
   },
 
-  // Replace this controller's contents with an ajax call to `url`
+  /**
+    Replace this controller's contents with an ajax call to `url`
+  */
   findAll: function() {
     var self = this;
 
@@ -165,39 +171,14 @@ Ember.ResourceController = Ember.ArrayController.extend({
     });
   },
 
-  // Given data entered by a user, create a new resource with ajax
-  //
-  // `Ember.Resource.update()` will validate the user-entered data.
-  // If validation and the ajax call are successful, the new resource
-  // will be added to this controller's contents.
-  create: function(userData) {
-    var self = this;
-    var resource = this.get('type').create();
+  /**
+    @private
 
-    return resource
-      .update(userData)
-        .done(function() {
-          self.pushObject(resource);
-        });
-  },
+    Base URL for ajax calls
 
-  // Delete a resource with ajax
-  //
-  // If successful, the resource will be removed from this controller's contents.
-  destroy: function(resource) {
-    var self = this;
-
-    return resource
-      .destroy()
-      .done(function() {
-        self.removeObject(resource);
-      });
-  },
-
-  // Determine the base URL for ajax calls
-  //
-  // Will use the `url` set for this controller, or if that's missing,
-  // the `url` specified for `type`.
+    Will use the `url` set for this controller, or if that's missing,
+    the `url` specified for `type`.
+  */
   _url: function() {
     if (this.url === undefined)
       return this.get('type').prototype.url;

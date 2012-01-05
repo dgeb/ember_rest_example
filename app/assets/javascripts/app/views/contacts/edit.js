@@ -3,14 +3,14 @@ App.EditContactView = Ember.Form.extend({
 
   submitForm: function() {
     var self = this;
+    var contact = this.get("contact");
 
-    this.get("contact")
-      .update(this.serialize())
-        .fail( function(e) {
-          App.displayError(e);
-        })
-        .done( function() {
-          self.get("parentView").stopEditing();
-        });
+    contact.save()
+      .fail( function(e) {
+        App.displayError(e);
+      })
+      .done( function() {
+        self.get("parentView").stopEditing();
+      });
   }
 });

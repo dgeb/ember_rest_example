@@ -8,13 +8,15 @@ App.NewContactView = Ember.Form.extend({
 
   submitForm: function() {
     var self = this;
+    var contact = this.get("contact");
 
-    App.contactsController.create(this.serialize())
+    contact.save()
       .fail( function(e) {
         App.displayError(e);
       })
       .done(function() {
-        self.get("parentView").set('showNew', false)
+        App.contactsController.pushObject(contact);
+        self.get("parentView").set('showNew', false);
       });
   }
 });

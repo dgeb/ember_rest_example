@@ -1,11 +1,5 @@
 {{#with contact}}
-  {{textField first_name}}
-  {{textField last_name}}
-  <button type="submit">
-    {{#if id}}
-      Update
-    {{else}}
-      Create
-    {{/if}}
-  </button>
+  {{view Ember.TextField valueBinding="first_name"}}
+  {{view Ember.TextField valueBinding="last_name"}}
+  {{submitButton "Save"}}
 {{/with}}

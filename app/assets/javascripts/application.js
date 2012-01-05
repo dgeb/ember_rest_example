@@ -6,7 +6,7 @@
 //
 //= require jquery
 //= require jquery_ujs
-//= require ember
+//= require_tree ./vendor
 //= require_tree ./lib
 //= require app
 //= require_tree ./app/models

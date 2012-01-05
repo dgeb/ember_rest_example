@@ -17,6 +17,11 @@ App.ShowContactView = Ember.View.extend({
   },
 
   destroyRecord: function() {
-    App.contactsController.destroy(this.get("contact"));
+    var contact = this.get("contact");
+
+    contact.destroy()
+      .done(function() {
+        App.contactsController.removeObject(contact);
+      });
   }
 });
