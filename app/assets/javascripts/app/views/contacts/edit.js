@@ -10,6 +10,13 @@ App.EditContactView = Ember.Form.extend({
     this._super();
   },
 
+  afterRender: function() {
+    // Set initial focus
+    // TODO: Is this the right place for this? Without setTimeout, Chrome gets locked up
+    var self = this;
+    setTimeout(function() {self.$('input:first').focus();});
+  },
+
   cancelForm: function() {
     this.get("parentView").hideEdit();
   },
