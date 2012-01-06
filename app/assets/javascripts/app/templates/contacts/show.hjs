@@ -1,8 +1,10 @@
 <td>{{contact.id}}</td>
 <td class="data">
-  {{#unless isEditing}}
+  {{#if isEditing}}
+    {{view App.EditContactView}}
+  {{else}}
     {{contact.fullName}}
-  {{/unless}}
+  {{/if}}
 </td>
 <td class="commands">
   {{#unless isEditing}}
