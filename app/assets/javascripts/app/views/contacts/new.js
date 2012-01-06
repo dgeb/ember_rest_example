@@ -7,10 +7,8 @@ App.NewContactView = Ember.Form.extend({
   },
 
   afterRender: function() {
-    // set initial focus
-    // TODO: Is this the right place for this? Without setTimeout, Chrome gets locked up
-    var self = this;
-    setTimeout(function() {self.$('input:first').focus();});
+    // TODO: Is this the right place to set focus? Without setTimeout, Chrome gets locked up
+    setTimeout(function() {this.$('input:first').focus();});
   },
 
   cancelForm: function() {
