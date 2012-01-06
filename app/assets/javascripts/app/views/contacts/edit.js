@@ -1,6 +1,10 @@
 App.EditContactView = Ember.Form.extend({
   templateName: 'app/templates/contacts/edit',
 
+  cancelForm: function() {
+    this.get("parentView").hideEdit();
+  },
+
   submitForm: function() {
     var self = this;
     var contact = this.get("contact");
@@ -10,7 +14,9 @@ App.EditContactView = Ember.Form.extend({
         App.displayError(e);
       })
       .done( function() {
-        self.get("parentView").stopEditing();
+        var parentView = self.get("parentView");
+        parentView.get("contact").duplicateProperties(contact);
+        parentView.hideEdit();
       });
   }
 });

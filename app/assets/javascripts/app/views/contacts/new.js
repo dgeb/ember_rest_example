@@ -6,6 +6,10 @@ App.NewContactView = Ember.Form.extend({
     this._super();
   },
 
+  cancelForm: function() {
+    this.get("parentView").hideNew();
+  },
+
   submitForm: function() {
     var self = this;
     var contact = this.get("contact");
@@ -16,7 +20,7 @@ App.NewContactView = Ember.Form.extend({
       })
       .done(function() {
         App.contactsController.pushObject(contact);
-        self.get("parentView").set('showNew', false);
+        self.get("parentView").hideNew();
       });
   }
 });

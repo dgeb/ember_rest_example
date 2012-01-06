@@ -1,30 +1,44 @@
-// A model class for RESTful resources
-//
-// Extend this class and define the following properties:
-//
-// * `name` -- the name used to contain the serialized data in this object's json
-//      representation
-// * `properties` -- an array of property names to be returned in this object's
-//      json representation
-// * `url` -- (optional) the base url of the resource (e.g. '/contacts/active');
-//      will default to the `url` for `type`
-//
-// You may also wish to override the following methods:
-//
-// * `serialize()`
-// * `serializeProperty(prop)`
-// * `deserialize(json)`
-// * `deserializeProperty(prop, value)`
-// * `validate(userData)`
-//
+/**
+  A model class for RESTful resources
+
+  Extend this class and define the following properties:
+
+  * `name` -- the name used to contain the serialized data in this object's json
+       representation
+  * `properties` -- an array of property names to be returned in this object's
+       json representation
+  * `url` -- (optional) the base url of the resource (e.g. '/contacts/active');
+       will default to the `url` for `type`
+
+  You may also wish to override the following methods:
+
+  * `serialize()`
+  * `serializeProperty(prop)`
+  * `deserialize(json)`
+  * `deserializeProperty(prop, value)`
+  * `validate(userData)`
+*/
 Ember.Resource = Ember.Object.extend({
   name:       Ember.required(),
   properties: Ember.required(),
   url:        Ember.required(),
 
-  // Generate this resource's JSON representation
-  //
-  // Override this or `serializeProperty` to provide custom serialization
+  /**
+    Duplicate every property from another resource
+  */
+  duplicateProperties: function(source) {
+    var prop;
+    for(var i = 0; i < this.properties.length; i++) {
+      prop = this.properties[i];
+      this.set(prop, source.get(prop));
+    }
+  },
+
+  /**
+    Generate this resource's JSON representation
+
+    Override this or `serializeProperty` to provide custom serialization
+  */
   serialize: function() {
     var ret = {},
         prop;
@@ -37,16 +51,20 @@ Ember.Resource = Ember.Object.extend({
     return ret;
   },
 
-  // Generate an individual property's JSON representation
-  //
-  // Override to provide custom serialization
+  /**
+    Generate an individual property's JSON representation
+
+    Override to provide custom serialization
+  */
   serializeProperty: function(prop) {
     return this.get(prop);
   },
 
-  // Set this resource's properties from JSON
-  //
-  // Override this or `deserializeProperty` to provide custom deserialization
+  /**
+    Set this resource's properties from JSON
+
+    Override this or `deserializeProperty` to provide custom deserialization
+  */
   deserialize: function(json) {
     Ember.beginPropertyChanges(this);
     for(var prop in json) {
@@ -56,19 +74,23 @@ Ember.Resource = Ember.Object.extend({
     return this;
   },
 
-  // Set an individual property from its value in JSON
-  //
-  // Override to provide custom serialization
+  /**
+    Set an individual property from its value in JSON
+
+    Override to provide custom serialization
+  */
   deserializeProperty: function(prop, value) {
     this.set(prop, value);
   },
 
-  // Create (if new) or update (if existing) record via ajax
-  //
-  // Will call validate() if defined for this record
-  //
-  // If successful, updates this record's id and other properties
-  // by calling `deserialize()` with the data returned.
+  /**
+    Create (if new) or update (if existing) record via ajax
+
+    Will call validate() if defined for this record
+
+    If successful, updates this record's id and other properties
+    by calling `deserialize()` with the data returned.
+  */
   save: function() {
     var self = this,
         isNew = (this.get('id') === undefined);
@@ -97,7 +119,10 @@ Ember.Resource = Ember.Object.extend({
     });
   },
 
-  // Delete record via ajax
+
+  /**
+    Delete resource via ajax
+  */
   destroy: function() {
     var self = this;
 
@@ -108,8 +133,12 @@ Ember.Resource = Ember.Object.extend({
     });
   },
 
-  // The URL for this resource, base on `url` and `id`
-  // (which will be undefined for new resources).
+  /**
+    @private
+
+    The URL for this resource, based on `url` and `id` (which will be
+    undefined for new resources).
+  */
   _url: function() {
     var url = this.url,
         id = this.get('id');
@@ -122,9 +151,6 @@ Ember.Resource = Ember.Object.extend({
 });
 
 /**
-  @class
-  @extends Ember.ArrayController
-
   A controller for RESTful resources
 
   Extend this class and define the following:

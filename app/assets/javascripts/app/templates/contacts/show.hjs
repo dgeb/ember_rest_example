@@ -1,14 +1,12 @@
 <td>{{contact.id}}</td>
-<td>
-  {{#if isEditing}}
-    {{view App.EditContactView contactBinding="contact"}}
-  {{else}}
+<td class="data">
+  {{#unless isEditing}}
     {{contact.fullName}}
-  {{/if}}
+  {{/unless}}
 </td>
 <td class="commands">
   {{#unless isEditing}}
-    {{#view Ember.Link action="startEditing"}}Edit{{/view}}
+    {{#view Ember.Link action="showEdit"}}Edit{{/view}}
     {{#view Ember.Link action="destroyRecord"}}Destroy{{/view}}
   {{/unless}}
 </td>

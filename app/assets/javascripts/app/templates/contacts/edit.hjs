@@ -7,3 +7,4 @@
     {{submitButton "Create"}}
   {{/if}}
 {{/with}}
+{{#view Ember.Link action="cancelForm"}}Cancel{{/view}}
