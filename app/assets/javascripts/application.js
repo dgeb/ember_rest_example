@@ -8,7 +8,7 @@
 //= require jquery_ujs
 //= require_tree ./vendor
 //= require_tree ./lib
-//= require app
+//= require app/app
 //= require_tree ./app/models
 //= require_tree ./app/controllers
 //= require_tree ./app/views
