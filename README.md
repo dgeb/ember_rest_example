@@ -1,9 +1,12 @@
-# Ember Resource Example
+# Ember REST Example
 
 This is a simple Rails 3.1 app created to demonstrate using Ember.js with a basic RESTful persistence strategy.
 
 The app itself is a single-page Ember.js take on Rails CRUD scaffolding. It is one of several similar examples I'm creating
 to try out Ember.js and different persistence strategies.
+
+I extracted the ultra-simple ember-rest.js from this example:
+https://github.com/cerebris/ember-rest
 
 ## Installation
 
