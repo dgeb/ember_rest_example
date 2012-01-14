@@ -1,4 +1,15 @@
 /**
+ Ember-REST.js
+
+ A simple library for RESTful resources in Ember.js
+
+ Copyright (c) 2012 Cerebris Corporation
+
+ Licensed under the MIT license:
+   http://www.opensource.org/licenses/mit-license.php
+*/
+
+/**
   A model class for RESTful resources
 
   Extend this class and define the following properties:
@@ -118,7 +129,6 @@ Ember.Resource = Ember.Object.extend({
       }
     });
   },
-
 
   /**
     Delete resource via ajax
