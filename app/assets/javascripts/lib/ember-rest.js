@@ -14,20 +14,20 @@
 
   Extend this class and define the following properties:
 
-  * `name` -- the name used to contain the serialized data in this object's json
+  * `name` -- the name used to contain the serialized data in this object's JSON
        representation
   * `properties` -- an array of property names to be returned in this object's
-       json representation
+       JSON representation
   * `url` -- (optional) the base url of the resource (e.g. '/contacts/active');
        will default to the `url` for `type`
 
-  You may also wish to override the following methods:
+  You may also wish to override / define the following methods:
 
   * `serialize()`
   * `serializeProperty(prop)`
   * `deserialize(json)`
   * `deserializeProperty(prop, value)`
-  * `validate(userData)`
+  * `validate()`
 */
 Ember.Resource = Ember.Object.extend({
   name:       Ember.required(),
@@ -165,8 +165,8 @@ Ember.Resource = Ember.Object.extend({
 
   Extend this class and define the following:
 
-  * `type` -- an Ember.Resource class; the class must have a 'data' property that
-       returns a json representation of the object
+  * `type` -- an Ember.Resource class; the class must have a `serialize` method that
+       returns a JSON representation of the object
   * `url` -- (optional) the base url of the resource (e.g. '/contacts/active');
        will default to the `url` for `type`
 */
