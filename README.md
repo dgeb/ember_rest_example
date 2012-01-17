@@ -22,4 +22,4 @@ Please help improve this example by filing issues and pull requests!
 
 ## License
 
-Copyright 2011 Dan Gebhardt. MIT License (see LICENSE for details).
+Copyright 2012 Dan Gebhardt. MIT License (see LICENSE for details).

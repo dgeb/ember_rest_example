@@ -3,6 +3,7 @@ Ember.Link = Ember.View.extend(Ember.TargetActionSupport, {
   tagName:           'a',
   attributeBindings: ['href'],
   href:              '#',
+  target:            'parentView',
   propagateEvents:   false,
 
   click: function(evt) {
