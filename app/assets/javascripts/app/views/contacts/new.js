@@ -1,4 +1,5 @@
-App.NewContactView = Ember.Form.extend({
+App.NewContactView = Ember.View.extend({
+  tagName: 'form',
   templateName: 'app/templates/contacts/edit',
 
   init: function() {
@@ -15,9 +16,11 @@ App.NewContactView = Ember.Form.extend({
     this.get("parentView").hideNew();
   },
 
-  submitForm: function() {
+  submit: function(event) {
     var self = this;
     var contact = this.get("contact");
+
+    event.preventDefault();
 
     contact.save()
       .fail( function(e) {
