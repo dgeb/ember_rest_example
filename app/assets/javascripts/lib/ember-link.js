@@ -7,8 +7,9 @@ Ember.Link = Ember.View.extend(Ember.TargetActionSupport, {
   propagateEvents:   false,
 
   click: function(evt) {
-    evt.preventDefault();
-    this.triggerAction();
-    return Ember.get(this, 'propagateEvents');
+    if (this.triggerAction()) {
+      evt.preventDefault();
+      return Ember.get(this, 'propagateEvents');
+    }
   }
 });
