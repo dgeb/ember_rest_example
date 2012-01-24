@@ -1599,7 +1599,7 @@ Handlebars.template = Handlebars.VM.template;
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ENV ember_assert */
@@ -1608,7 +1608,7 @@ if ('undefined' === typeof Ember) {
 /**
   @namespace
   @name Ember
-  @version 0.9.3
+  @version 0.9.4
 
   All Ember methods and functions are defined inside of this namespace.
   You generally should not add new properties to this namespace as it may be
@@ -1640,10 +1640,10 @@ if ('undefined' !== typeof window) {
 /**
   @static
   @type String
-  @default '0.9.3'
+  @default '0.9.4'
   @constant
 */
-Ember.VERSION = '0.9.3';
+Ember.VERSION = '0.9.4';
 
 /**
   @static
@@ -1727,7 +1727,7 @@ Ember.Logger = window.console || { log: Ember.K, warn: Ember.K, error: Ember.K }
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -1875,7 +1875,7 @@ if (!platform.defineProperty) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 // ..........................................................
@@ -2213,7 +2213,7 @@ Ember.makeArray = function(obj) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -2387,8 +2387,8 @@ function getPath(target, path) {
 }
 
 var TUPLE_RET = [];
-var IS_GLOBAL = /^([A-Z$]|([0-9][A-Z$])).*[\.\*]/;
-var IS_GLOBAL_SET = /^([A-Z$]|([0-9][A-Z$])).*[\.\*]?/;
+var IS_GLOBAL = /^([A-Z$]|([0-9][A-Z$]))/;
+var IS_GLOBAL_PATH = /^([A-Z$]|([0-9][A-Z$])).*[\.\*]/;
 var HAS_THIS  = /^this[\.\*]/;
 var FIRST_KEY = /^([^\.\*]+)/;
 
@@ -2399,7 +2399,7 @@ function firstKey(path) {
 // assumes path is already normalized
 function normalizeTuple(target, path) {
   var hasThis  = HAS_THIS.test(path),
-      isGlobal = !hasThis && IS_GLOBAL.test(path),
+      isGlobal = !hasThis && IS_GLOBAL_PATH.test(path),
       key;
 
   if (!target || isGlobal) target = window;
@@ -2464,8 +2464,8 @@ Ember.normalizeTuple = function(target, path) {
 
 Ember.normalizeTuple.primitive = normalizeTuple;
 
-Ember.getPath = function(root, path) {
-  var hasThis, hasStar, isGlobal;
+Ember.getPath = function(root, path, _checkGlobal) {
+  var hasThis, hasStar, isGlobal, ret;
   
   // Helpers that operate with 'this' within an #each
   if (path === '') {
@@ -2487,15 +2487,26 @@ Ember.getPath = function(root, path) {
   // detect complicated paths and normalize them
   path = normalizePath(path);
   hasThis  = HAS_THIS.test(path);
-  isGlobal = !hasThis && IS_GLOBAL.test(path);
-  if (!root || hasThis || isGlobal || hasStar) {
+
+  if (!root || hasThis || hasStar) {
+    if (root && root !== window && IS_GLOBAL.test(path)) {
+      console.warn("Fetching globals with Ember.getPath is deprecated", root, path);
+    }
+
     var tuple = normalizeTuple(root, path);
     root = tuple[0];
     path = tuple[1];
     tuple.length = 0;
   }
-  
-  return getPath(root, path);
+
+  ret = getPath(root, path);
+
+  if (ret === undefined && root !== window && !hasThis && IS_GLOBAL.test(path) && _checkGlobal !== false) {
+    console.warn("Fetching globals with Ember.getPath is deprecated", root, path);
+    return Ember.getPath(window, path);
+  } else {
+    return ret;
+  }
 };
 
 Ember.setPath = function(root, path, value, tolerant) {
@@ -2509,6 +2520,10 @@ Ember.setPath = function(root, path, value, tolerant) {
   
   path = normalizePath(path);
   if (path.indexOf('*')>0) {
+    if (root && root !== window && IS_GLOBAL.test(path)) {
+      console.warn("Setting globals with Ember.setPath is deprecated", path);
+    };
+
     var tuple = normalizeTuple(root, path);
     root = tuple[0];
     path = tuple[1];
@@ -2518,14 +2533,17 @@ Ember.setPath = function(root, path, value, tolerant) {
   if (path.indexOf('.') > 0) {
     keyName = path.slice(path.lastIndexOf('.')+1);
     path    = path.slice(0, path.length-(keyName.length+1));
-    if (!HAS_THIS.test(path) && IS_GLOBAL_SET.test(path) && path.indexOf('.')<0) {
-      root = window[path]; // special case only works during set...
-    } else if (path !== 'this') {
-      root = Ember.getPath(root, path);
+    if (path !== 'this') {
+      // Remove the `false` when we're done with this deprecation
+      root = Ember.getPath(root, path, false);
+      if (!root && IS_GLOBAL.test(path)) {
+        console.warn("Setting globals with Ember.setPath is deprecated", path);
+        root = Ember.getPath(window, path);
+      }
     }
 
   } else {
-    if (IS_GLOBAL_SET.test(path)) throw new Error('Invalid Path');
+    if (IS_GLOBAL.test(path)) throw new Error('Invalid Path');
     keyName = path;
   }
   
@@ -2641,7 +2659,7 @@ if (!Array.prototype.indexOf) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -2757,7 +2775,9 @@ function xformForArgs(args) {
   return function (target, method, params) {
     var obj = params[0], keyName = changeKey(params[1]), val;
     var copy_args = args.slice();
-    if (method.length>2) val = Ember.getPath(obj, keyName);
+    if (method.length>2) {
+      val = Ember.getPath(Ember.isGlobalPath(keyName) ? window : obj, keyName);
+    }
     copy_args.unshift(obj, keyName, val);
     method.apply(target, copy_args);
   };
@@ -2845,7 +2865,7 @@ Ember.notifyBeforeObservers = function(obj, keyName) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -3252,7 +3272,7 @@ Ember.createPrototype = function(obj, props) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -3838,8 +3858,8 @@ Ember.destroy = function (obj) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2010 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2010 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -4372,7 +4392,7 @@ Ember.RunLoop.end = Ember.run.end;
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -4480,7 +4500,8 @@ var NOT = {
 var get     = Ember.get,
     getPath = Ember.getPath,
     setPath = Ember.setPath,
-    guidFor = Ember.guidFor;
+    guidFor = Ember.guidFor,
+    isGlobalPath = Ember.isGlobalPath;
 
 // Applies a binding's transformations against a value.
 function getTransformedValue(binding, val, obj, dir) {
@@ -4508,9 +4529,18 @@ function empty(val) {
   return val===undefined || val===null || val==='' || (Ember.isArray(val) && get(val, 'length')===0) ;
 }
 
+function getPathWithGlobals(obj, path) {
+  return getPath(isGlobalPath(path) ? window : obj, path);
+}
+
 function getTransformedFromValue(obj, binding) {
-  var operation = binding._operation;
-  var fromValue = operation ? operation(obj, binding._from, binding._operand) : getPath(obj, binding._from);
+  var operation = binding._operation,
+      fromValue;
+  if (operation) {
+    fromValue = operation(obj, binding._from, binding._operand);
+  } else {
+    fromValue = getPathWithGlobals(obj, binding._from);
+  }
   return getTransformedValue(binding, fromValue, obj, 'to');
 }
 
@@ -4520,11 +4550,11 @@ function getTransformedToValue(obj, binding) {
 }
 
 var AND_OPERATION = function(obj, left, right) {
-  return getPath(obj, left) && getPath(obj, right);
+  return getPathWithGlobals(obj, left) && getPathWithGlobals(obj, right);
 };
 
 var OR_OPERATION = function(obj, left, right) {
-  return getPath(obj, left) || getPath(obj, right);
+  return getPathWithGlobals(obj, left) || getPathWithGlobals(obj, right);
 };
 
 // ..........................................................
@@ -4892,12 +4922,12 @@ Binding.prototype = /** @scope Ember.Binding.prototype */ {
     // if we're synchronizing from the remote object...
     if (direction === 'fwd') {
       if (log) { Ember.Logger.log(' ', this.toString(), toValue, '->', fromValue, obj); }
-      Ember.trySetPath(obj, toPath, fromValue);
+      Ember.trySetPath(Ember.isGlobalPath(toPath) ? window : obj, toPath, fromValue);
 
     // if we're synchronizing *to* the remote object
     } else if (direction === 'back') {// && !this._oneWay) {
       if (log) { Ember.Logger.log(' ', this.toString(), toValue, '<-', fromValue, obj); }
-      Ember.trySetPath(obj, fromPath, toValue);
+      Ember.trySetPath(Ember.isGlobalPath(fromPath) ? window : obj, fromPath, toValue);
     }
   }
 
@@ -5233,7 +5263,7 @@ Ember.oneWay = function(obj, to, from) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -5504,7 +5534,7 @@ Ember.computed = function(func) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -5737,7 +5767,7 @@ Ember.listenersFor = listenersFor;
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var Mixin, MixinDelegate, REQUIRED, Alias;
@@ -6268,7 +6298,7 @@ Ember.beforeObserver = function(func) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -6276,7 +6306,7 @@ Ember.beforeObserver = function(func) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 
@@ -7033,7 +7063,7 @@ Ember.Enumerable = Ember.Mixin.create( /** @lends Ember.Enumerable */ {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 // ..........................................................
@@ -7392,7 +7422,7 @@ Ember.Array = Ember.Mixin.create(Ember.Enumerable, /** @scope Ember.Array.protot
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /**
@@ -7507,7 +7537,7 @@ Ember.MutableEnumerable = Ember.Mixin.create(Ember.Enumerable,
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 // ..........................................................
@@ -7712,7 +7742,7 @@ Ember.MutableArray = Ember.Mixin.create(Ember.Array, Ember.MutableEnumerable,
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 
@@ -8070,7 +8100,7 @@ Ember.Observable = Ember.Mixin.create(/** @scope Ember.Observable.prototype */ {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 
@@ -8100,7 +8130,7 @@ function makeCtor() {
     if (initMixins) {
       this.reopen.apply(this, initMixins);
       initMixins = null;
-      rewatch(this); // ålways rewatch just in case
+      rewatch(this); // Ã¥lways rewatch just in case
       this.init.apply(this, arguments);
     } else {
       if (hasChains) {
@@ -8277,7 +8307,7 @@ Ember.CoreObject = CoreObject;
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ENV ember_assert */
@@ -8660,7 +8690,7 @@ Ember.Error.prototype = Ember.create(Error.prototype);
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc.
+// Copyright: Â©2011 Strobe Inc.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 
@@ -8876,8 +8906,8 @@ Ember.String = {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2010 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2010 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set;
@@ -8939,8 +8969,8 @@ Ember.Copyable = Ember.Mixin.create(
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2010 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2010 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 
@@ -9042,7 +9072,7 @@ Ember.FROZEN_ERROR = "Frozen object cannot be modified.";
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set, guidFor = Ember.guidFor, none = Ember.none;
@@ -9413,7 +9443,7 @@ Ember.Set.create = function(items) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 Ember.CoreObject.subclasses = new Ember.Set();
@@ -9434,7 +9464,7 @@ Ember.Object = Ember.CoreObject.extend(Ember.Observable);
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set;
@@ -9561,7 +9591,7 @@ Ember.ArrayProxy = Ember.Object.extend(Ember.MutableArray,
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Metal
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /**
@@ -9607,8 +9637,8 @@ Ember.ArrayController = Ember.ArrayProxy.extend();
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var fmt = Ember.String.fmt,
@@ -9679,8 +9709,8 @@ if (Ember.EXTEND_PROTOTYPES) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var a_slice = Array.prototype.slice;
@@ -9711,8 +9741,8 @@ if (Ember.EXTEND_PROTOTYPES) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var IS_BINDING = Ember.IS_BINDING = /^.+Binding$/;
@@ -9748,7 +9778,7 @@ Ember._mixinBindings = function(obj, key, value, m) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -9759,8 +9789,8 @@ Ember._mixinBindings = function(obj, key, value, m) {
  * @license
  * ==========================================================================
  * Ember
- * Copyright ©2006-2011, Strobe Inc. and contributors.
- * Portions copyright ©2008-2011 Apple Inc. All rights reserved.
+ * Copyright Â©2006-2011, Strobe Inc. and contributors.
+ * Portions copyright Â©2008-2011 Apple Inc. All rights reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -9791,8 +9821,8 @@ Ember._mixinBindings = function(obj, key, value, m) {
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /**
@@ -9839,7 +9869,7 @@ Ember.Comparable = Ember.Mixin.create( /** @scope Ember.Comparable.prototype */{
 
 
 (function(exports) {
-var get = Ember.get, set = Ember.set;
+var get = Ember.get, set = Ember.set, getPath = Ember.getPath;
 
 Ember.TargetActionSupport = Ember.Mixin.create({
   target: null,
@@ -9849,7 +9879,10 @@ Ember.TargetActionSupport = Ember.Mixin.create({
     var target = get(this, 'target');
 
     if (Ember.typeOf(target) === "string") {
-      return Ember.getPath(this, target);
+      // TODO: Remove the false when deprecation is done
+      var value = getPath(this, target, false);
+      if (value === undefined) { value = getPath(window, target); }
+      return value;
     } else {
       return target;
     }
@@ -9885,7 +9918,7 @@ Ember.TargetActionSupport = Ember.Mixin.create({
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -9894,7 +9927,7 @@ Ember.TargetActionSupport = Ember.Mixin.create({
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /**
@@ -9940,7 +9973,7 @@ Ember.Namespace.PROCESSED = false;
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /**
@@ -9975,7 +10008,7 @@ Ember.Application = Ember.Namespace.extend();
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var set = Ember.set, get = Ember.get, guidFor = Ember.guidFor;
@@ -10176,7 +10209,7 @@ Ember.EachProxy = Ember.Object.extend({
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set;
@@ -10323,7 +10356,7 @@ if (Ember.EXTEND_PROTOTYPES) Ember.NativeArray.activate();
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -10332,7 +10365,7 @@ if (Ember.EXTEND_PROTOTYPES) Ember.NativeArray.activate();
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Runtime
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -10340,8 +10373,8 @@ if (Ember.EXTEND_PROTOTYPES) Ember.NativeArray.activate();
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 
@@ -10713,8 +10746,8 @@ Ember._RenderBuffer = Ember.Object.extend(
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 
@@ -10896,8 +10929,8 @@ Ember.EventDispatcher = Ember.Object.extend(
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set;
@@ -10968,23 +11001,32 @@ Ember.Application = Ember.Namespace.extend(
 
     // jQuery 1.7 doesn't call the ready callback if already ready
     if (Ember.$.isReady) {
-      this.ready();
+      this.didBecomeReady();
     } else {
       var self = this;
       Ember.$(document).ready(function() {
-        self.ready();
+        self.didBecomeReady();
       });
     }
 
     this._super();
   },
 
-  ready: function() {
+  /** @private */
+  didBecomeReady: function() {
     var eventDispatcher = get(this, 'eventDispatcher'),
         customEvents    = get(this, 'customEvents');
 
     eventDispatcher.setup(customEvents);
+
+    this.ready();
   },
+
+  /**
+    Called when the Application has become ready.
+    The call will be delayed until the DOM has become ready.
+  */
+  ready: Ember.K,
 
   /** @private */
   destroy: function() {
@@ -11001,8 +11043,8 @@ Ember.Application = Ember.Namespace.extend(
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 
@@ -11017,8 +11059,8 @@ queues.splice(jQuery.inArray('actions', queues)+1, 0, 'render');
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -11027,8 +11069,8 @@ queues.splice(jQuery.inArray('actions', queues)+1, 0, 'render');
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals ember_assert */
@@ -12101,6 +12143,14 @@ Ember.View = Ember.Object.extend(
     set(this, 'domManager', this.domManagerClass.create({ view: this }));
 
     meta(this)["Ember.View"] = {};
+
+    var viewController = get(this, 'viewController');
+    if (viewController) {
+      viewController = Ember.getPath(viewController);
+      if (viewController) {
+        set(viewController, 'view', this);
+      }
+    }
   },
 
   appendChild: function(view, options) {
@@ -12415,8 +12465,8 @@ Ember.View.applyAttributeBindings = function(elem, name, value) {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set;
@@ -12453,8 +12503,8 @@ Ember.View.reopen({
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 Ember.View.states.preRender = {
@@ -12507,8 +12557,8 @@ Ember.View.states.preRender = {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set, meta = Ember.meta;
@@ -12584,8 +12634,8 @@ Ember.View.states.inBuffer = {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set, meta = Ember.meta;
@@ -12662,8 +12712,8 @@ Ember.View.states.inDOM = {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var destroyedError = "You can't call %@ on a destroyed view", fmt = Ember.String.fmt;
@@ -12697,8 +12747,8 @@ Ember.View.states.destroyed = {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -12707,8 +12757,8 @@ Ember.View.states.destroyed = {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set, meta = Ember.meta;
@@ -12778,7 +12828,7 @@ Ember.ContainerView = Ember.View.extend({
   },
 
   /**
-    When the container view is destroyer, tear down the child views
+    When the container view is destroyed, tear down the child views
     array observer.
 
     @private
@@ -12805,6 +12855,11 @@ Ember.ContainerView = Ember.View.extend({
     @param {Number} removed the number of child views removed
   **/
   childViewsWillChange: function(views, start, removed) {
+    if (removed === 0) { return; }
+
+    var changedViews = views.slice(start, removed);
+    this.setParentView(changedViews, null);
+
     this.invokeForState('childViewsWillChange', views, start, removed);
   },
 
@@ -12829,8 +12884,17 @@ Ember.ContainerView = Ember.View.extend({
     // No new child views were added; bail out.
     if (added === 0) return;
 
+    var changedViews = views.slice(start, added);
+    this.setParentView(changedViews, this);
+
     // Let the current state handle the changes
     this.invokeForState('childViewsDidChange', views, start, added);
+  },
+
+  setParentView: function(views, parentView) {
+    views.forEach(function(view) {
+      set(view, '_parentView', parentView);
+    });
   },
 
   /**
@@ -12922,8 +12986,8 @@ Ember.ContainerView.reopen({
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set, fmt = Ember.String.fmt;
@@ -13111,8 +13175,8 @@ Ember.CollectionView.CONTAINER_MAP = {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -13121,8 +13185,8 @@ Ember.CollectionView.CONTAINER_MAP = {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember - JavaScript Application Framework
-// Copyright: ©2006-2011 Strobe Inc. and contributors.
-//            Portions ©2008-2011 Apple Inc. All rights reserved.
+// Copyright: Â©2006-2011 Strobe Inc. and contributors.
+//            Portions Â©2008-2011 Apple Inc. All rights reserved.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 ember_assert("Ember requires jQuery 1.6 or 1.7", window.jQuery && jQuery().jquery.match(/^1\.[67](.\d+)?$/));
@@ -13407,10 +13471,25 @@ Ember.ViewState = Ember.State.extend({
   isViewState: true,
 
   enter: function(stateManager) {
-    var view = get(this, 'view');
+    var view = get(this, 'view'), root, childViews;
 
     if (view) {
-      view.appendTo(stateManager.get('rootElement') || 'body');
+      if (Ember.View.detect(view)) {
+        view = view.create();
+        set(this, 'view', view);
+      }
+
+      ember_assert('view must be an Ember.View', view instanceof Ember.View);
+
+      root = stateManager.get('rootView');
+
+      if (root) {
+        childViews = get(root, 'childViews');
+        childViews.pushObject(view);
+      } else {
+        root = stateManager.get('rootElement') || 'body';
+        view.appendTo(root);
+      }
     }
   },
 
@@ -13418,11 +13497,20 @@ Ember.ViewState = Ember.State.extend({
     var view = get(this, 'view');
 
     if (view) {
-      view.remove();
+      // If the view has a parent view, then it is
+      // part of a view hierarchy and should be removed
+      // from its parent.
+      if (get(view, 'parentView')) {
+        view.removeFromParent();
+      } else {
+
+        // Otherwise, the view is a "root view" and
+        // was appended directly to the DOM.
+        view.remove();
+      }
     }
   }
 });
-
 
 })({});
 
@@ -13430,7 +13518,7 @@ Ember.ViewState = Ember.State.extend({
 (function(exports) {
 // ==========================================================================
 // Project:  Ember Statecharts
-// Copyright: ©2011 Living Social Inc. and contributors.
+// Copyright: Â©2011 Living Social Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -13438,7 +13526,7 @@ Ember.ViewState = Ember.State.extend({
 (function(exports) {
 // ==========================================================================
 // Project:   metamorph
-// Copyright: ©2011 My Company Inc. All rights reserved.
+// Copyright: Â©2011 My Company Inc. All rights reserved.
 // ==========================================================================
 
 (function(window) {
@@ -13851,7 +13939,7 @@ Ember.ViewState = Ember.State.extend({
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals Handlebars */
@@ -13977,6 +14065,21 @@ Ember.Handlebars.compile = function(string) {
 };
 
 /**
+  Lookup both on root and on window
+
+  @param {Object} root The object to look up the property on
+  @param {String} path The path to be lookedup
+*/
+Ember.Handlebars.getPath = function(root, path) {
+  // TODO: Remove this `false` when the `getPath` globals support is removed
+  var value = Ember.getPath(root, path, false);
+  if (value === undefined && root !== window && Ember.isGlobalPath(path)) {
+    value = Ember.getPath(window, path);
+  }
+  return value;
+};
+
+/**
   Registers a helper in Handlebars that will be called if no property with the
   given name can be found on the current context object, and no helper with
   that name is registered.
@@ -14005,7 +14108,7 @@ Ember.Handlebars.registerHelper('helperMissing', function(path, options) {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var set = Ember.set, get = Ember.get;
@@ -14042,7 +14145,7 @@ Ember.Checkbox = Ember.View.extend({
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set;
@@ -14100,7 +14203,7 @@ Ember.TextSupport.KEY_EVENTS = {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set;
@@ -14126,7 +14229,7 @@ Ember.TextField = Ember.View.extend(Ember.TextSupport,
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set;
@@ -14225,38 +14328,7 @@ Ember.Button = Ember.View.extend(Ember.TargetActionSupport, {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
-// License:   Licensed under MIT license (see license.js)
-// ==========================================================================
-var set = Ember.set, get = Ember.get;
-
-Ember.RadioButton = Ember.View.extend({
-  title: null,
-  checked: false,
-  group: "radio_button",
-  disabled: false,
-
-  classNames: ['ember-radio-button'],
-
-  defaultTemplate: Ember.Handlebars.compile('<label><input type="radio" {{bindAttr disabled="disabled" name="group" value="val" checked="checked"}}>{{title}}</label>'),
-
-  change: function() {
-    Ember.run.once(this, this._updateElementValue);
-  },
-
-  _updateElementValue: function() {
-    var input = this.$('input:radio');
-    set(this, 'value', input.attr('value'));
-  }
-});
-
-})({});
-
-
-(function(exports) {
-// ==========================================================================
-// Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 var get = Ember.get, set = Ember.set;
@@ -14331,9 +14403,96 @@ Ember.TabView = Ember.View.extend({
 
 
 (function(exports) {
+var set = Ember.set, get = Ember.get, getPath = Ember.getPath;
+
+Ember.Select = Ember.View.extend({
+  tagName: 'select',
+  template: Ember.Handlebars.compile(
+    '{{#if prompt}}<option>{{prompt}}</option>{{/if}}' +
+    '{{#each content}}{{view Ember.SelectOption contentBinding="this"}}{{/each}}'
+  ),
+
+  content: null,
+  selection: null,
+  prompt: null,
+
+  optionLabelPath: 'content',
+  optionValuePath: 'content',
+
+
+  didInsertElement: function() {
+    var selection = get(this, 'selection');
+
+    if (selection) { this.selectionDidChange(); }
+
+    this.change();
+  },
+
+  change: function() {
+    var selectedIndex = this.$()[0].selectedIndex,
+        content = get(this, 'content'),
+        prompt = get(this, 'prompt');
+
+    if (!content) { return; }
+    if (prompt && selectedIndex === 0) { set(this, 'selection', null); return; }
+
+    if (prompt) { selectedIndex -= 1; }
+    set(this, 'selection', content.objectAt(selectedIndex));
+  },
+
+  selectionDidChange: Ember.observer(function() {
+    var el = this.$()[0],
+        content = get(this, 'content'),
+        selection = get(this, 'selection'),
+        selectionIndex = content.indexOf(selection),
+        prompt = get(this, 'prompt');
+
+    if (prompt) { selectionIndex += 1; }
+    if (el) { el.selectedIndex = selectionIndex; }
+  }, 'selection')
+});
+
+Ember.SelectOption = Ember.View.extend({
+  tagName: 'option',
+  template: Ember.Handlebars.compile("{{label}}"),
+  attributeBindings: ['value'],
+
+  init: function() {
+    this.labelPathDidChange();
+    this.valuePathDidChange();
+
+    this._super();
+  },
+
+  labelPathDidChange: Ember.observer(function() {
+    var labelPath = getPath(this, 'parentView.optionLabelPath');
+
+    if (!labelPath) { return; }
+
+    Ember.defineProperty(this, 'label', Ember.computed(function() {
+      return getPath(this, labelPath);
+    }).property(labelPath).cacheable());
+  }, 'parentView.optionLabelPath'),
+
+  valuePathDidChange: Ember.observer(function() {
+    var valuePath = getPath(this, 'parentView.optionValuePath');
+
+    if (!valuePath) { return; }
+
+    Ember.defineProperty(this, 'value', Ember.computed(function() {
+      return getPath(this, valuePath);
+    }).property(valuePath).cacheable());
+  }, 'parentView.optionValuePath')
+});
+
+
+})({});
+
+
+(function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -14420,12 +14579,12 @@ Ember.Metamorph = Ember.Mixin.create({
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals Handlebars */
 
-var get = Ember.get, set = Ember.set, getPath = Ember.getPath;
+var get = Ember.get, set = Ember.set, getPath = Ember.Handlebars.getPath;
 /**
   @ignore
   @private
@@ -14595,11 +14754,11 @@ Ember._BindableSpanView = Ember.View.extend(Ember.Metamorph,
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals Handlebars */
-var get = Ember.get, getPath = Ember.getPath, set = Ember.set, fmt = Ember.String.fmt;
+var get = Ember.get, getPath = Ember.Handlebars.getPath, set = Ember.set, fmt = Ember.String.fmt;
 
 var EmberHandlebars = Ember.Handlebars, helpers = EmberHandlebars.helpers;
 var helpers = EmberHandlebars.helpers;
@@ -15005,7 +15164,7 @@ EmberHandlebars.bindClasses = function(context, classBindings, view, bindAttrId)
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals Handlebars ember_assert */
@@ -15082,7 +15241,7 @@ Ember.Handlebars.ViewHelper = Ember.Object.create({
         newView;
 
     if ('string' === typeof path) {
-      newView = Ember.getPath(thisContext, path);
+      newView = Ember.Handlebars.getPath(thisContext, path);
       ember_assert("Unable to find view at path '" + path + "'", !!newView);
     } else {
       newView = path;
@@ -15128,13 +15287,13 @@ Ember.Handlebars.registerHelper('view', function(path, options) {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals Handlebars ember_assert */
 
 // TODO: Don't require all of this module
-var get = Ember.get, fmt = Ember.String.fmt;
+var get = Ember.get, getPath = Ember.Handlebars.getPath, fmt = Ember.String.fmt;
 
 /**
   @name Handlebars.helpers.collection
@@ -15159,7 +15318,7 @@ Ember.Handlebars.registerHelper('collection', function(path, options) {
   // If passed a path string, convert that into an object.
   // Otherwise, just default to the standard class.
   var collectionClass;
-  collectionClass = path ? Ember.getPath(this, path) : Ember.CollectionView;
+  collectionClass = path ? getPath(this, path) : Ember.CollectionView;
   ember_assert(fmt("%@ #collection: Could not find %@", data.view, path), !!collectionClass);
 
   var hash = options.hash, itemHash = {}, match;
@@ -15168,7 +15327,7 @@ Ember.Handlebars.registerHelper('collection', function(path, options) {
   var itemViewClass, itemViewPath = hash.itemViewClass;
   var collectionPrototype = get(collectionClass, 'proto');
   delete hash.itemViewClass;
-  itemViewClass = itemViewPath ? Ember.getPath(collectionPrototype, itemViewPath) : collectionPrototype.itemViewClass;
+  itemViewClass = itemViewPath ? getPath(collectionPrototype, itemViewPath) : collectionPrototype.itemViewClass;
   ember_assert(fmt("%@ #collection: Could not find %@", data.view, itemViewPath), !!itemViewClass);
 
   // Go through options passed to the {{collection}} helper and extract options
@@ -15222,11 +15381,11 @@ Ember.Handlebars.registerHelper('collection', function(path, options) {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals Handlebars */
-var getPath = Ember.getPath;
+var getPath = Ember.Handlebars.getPath;
 
 /**
   `unbound` allows you to output a property without binding. *Important:* The 
@@ -15249,7 +15408,7 @@ Ember.Handlebars.registerHelper('unbound', function(property, fn) {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals Handlebars */
@@ -15340,9 +15499,67 @@ Ember.Handlebars.registerHelper('template', function(name, options) {
 
 
 (function(exports) {
+var EmberHandlebars = Ember.Handlebars, getPath = Ember.Handlebars.getPath;
+
+var ActionHelper = EmberHandlebars.ActionHelper = {};
+
+ActionHelper.registerAction = function(actionName, eventName, target, view) {
+  var actionId = (++jQuery.uuid).toString(),
+      existingHandler = view[eventName],
+      handler;
+
+  if (existingHandler) {
+    var handler = function(event) {
+      var ret;
+      if ($(event.target).closest('[data-ember-action]').attr('data-ember-action') === actionId) {
+        ret = target[actionName](event);
+      }
+      return ret !== false ? existingHandler.call(view, event) : ret;
+    };
+  } else {
+    var handler = function(event) {
+      if ($(event.target).closest('[data-ember-action]').attr('data-ember-action') === actionId) {
+        return target[actionName](event);
+      }
+    };
+  }
+
+  view[eventName] = handler;
+
+  view.reopen({
+    rerender: function() {
+      if (existingHandler) {
+        view[eventName] = existingHandler;
+      } else {
+        view[eventName] = null;
+      }
+      return this._super();
+    }
+  });
+
+  return actionId;
+};
+
+EmberHandlebars.registerHelper('action', function(actionName, options) {
+  var hash = options.hash || {},
+      eventName = options.hash.on || "click",
+      view = options.data.view,
+      target;
+
+  if (view.isVirtual) { view = view.get('parentView'); }
+  target = options.hash.target ? getPath(this, options.hash.target) : view;
+
+  var actionId = ActionHelper.registerAction(actionName, eventName, target, view);
+  return new EmberHandlebars.SafeString('data-ember-action="' + actionId + '"');
+});
+
+})({});
+
+
+(function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -15351,7 +15568,7 @@ Ember.Handlebars.registerHelper('template', function(name, options) {
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 /*globals Handlebars */
@@ -15432,7 +15649,7 @@ Ember.$(document).ready(
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
@@ -15441,7 +15658,7 @@ Ember.$(document).ready(
 (function(exports) {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
+// Copyright: Â©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 })({});
