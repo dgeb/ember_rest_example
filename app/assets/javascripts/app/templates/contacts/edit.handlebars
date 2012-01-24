@@ -1,6 +1,6 @@
 {{#with contact}}
-  {{view Ember.TextField valueBinding="first_name"}}
-  {{view Ember.TextField valueBinding="last_name"}}
+  {{view Ember.TextField valueBinding="first_name" placeholder="First name"}}
+  {{view Ember.TextField valueBinding="last_name"  placeholder="Last name"}}
   {{#if id}}
     {{submitButton "Update"}}
   {{else}}

@@ -5,10 +5,10 @@
   {{else}}
     {{contact.fullName}}
   {{/if}}
-</td>
-<td class="commands">
-  {{#unless isEditing}}
-    {{#view Ember.Link action="showEdit"}}Edit{{/view}}
-    {{#view Ember.Link action="destroyRecord"}}Destroy{{/view}}
-  {{/unless}}
+  <div class="commands">
+    {{#unless isEditing}}
+      {{#view Ember.Link action="showEdit"}}Edit{{/view}}
+      {{#view Ember.Link action="destroyRecord"}}Remove{{/view}}
+    {{/unless}}
+  </div>
 </td>
