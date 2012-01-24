@@ -7,8 +7,8 @@
   {{/if}}
   <div class="commands">
     {{#unless isEditing}}
-      {{#view Ember.Link action="showEdit"}}Edit{{/view}}
-      {{#view Ember.Link action="destroyRecord"}}Remove{{/view}}
+      <a href="#" {{action "showEdit"}}>Edit</a>
+      <a href="#" {{action "destroyRecord"}}>Remove</a>
     {{/unless}}
   </div>
 </td>
