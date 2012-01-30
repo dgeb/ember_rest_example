@@ -1,4 +1,4 @@
-App.Contact  = Ember.Resource.extend({
+App.Contact = Ember.Resource.extend({
   url:        '/contacts',
   name:       'contact',
   properties: ['first_name', 'last_name'],

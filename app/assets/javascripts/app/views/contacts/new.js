@@ -3,8 +3,8 @@ App.NewContactView = Ember.View.extend({
   templateName: 'app/templates/contacts/edit',
 
   init: function() {
-    this.set("contact", App.Contact.create());
     this._super();
+    this.set("contact", App.Contact.create());
   },
 
   didInsertElement: function() {
