@@ -19,6 +19,9 @@ App.ShowContactView = Ember.View.extend({
     var contact = this.get("contact");
 
     contact.destroy()
+      .fail( function(e) {
+        App.displayError(e);
+      })
       .done(function() {
         App.contactsController.removeObject(contact);
       });
