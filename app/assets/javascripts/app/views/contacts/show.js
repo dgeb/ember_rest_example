@@ -1,7 +1,7 @@
 App.ShowContactView = Ember.View.extend({
   templateName: 'app/templates/contacts/show',
-  classNames: ['show-contact'],
-  tagName: 'tr',
+  classNames:   ['show-contact'],
+  tagName:      'tr',
 
   doubleClick: function() {
     this.showEdit();
@@ -18,7 +18,7 @@ App.ShowContactView = Ember.View.extend({
   destroyRecord: function() {
     var contact = this.get("contact");
 
-    contact.destroy()
+    contact.destroyResource()
       .fail( function(e) {
         App.displayError(e);
       })

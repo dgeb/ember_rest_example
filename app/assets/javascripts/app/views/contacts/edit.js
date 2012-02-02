@@ -1,5 +1,5 @@
 App.EditContactView = Ember.View.extend({
-  tagName: 'form',
+  tagName:      'form',
   templateName: 'app/templates/contacts/edit',
 
   init: function() {
@@ -26,7 +26,7 @@ App.EditContactView = Ember.View.extend({
 
     event.preventDefault();
 
-    contact.save()
+    contact.saveResource()
       .fail( function(e) {
         App.displayError(e);
       })
