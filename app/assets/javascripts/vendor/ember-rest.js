@@ -107,6 +107,23 @@ Ember.Resource = Ember.Object.extend({
   },
 
   /**
+    Load via ajax and deserialize
+
+    REQUIRED: `id`
+  */
+  findResource: function() {
+    var self = this;
+
+    return jQuery.ajax({
+      url: this._resourceUrl(),
+      dataType: 'json',
+      type: 'GET'
+    }).done( function(json) {
+      self.deserialize(json);
+    });
+  },
+
+  /**
     Create (if new) or update (if existing) record via ajax
 
     Will call validate() if defined for this record
@@ -117,8 +134,7 @@ Ember.Resource = Ember.Object.extend({
     REQUIRED: `properties` and `name` (see note above)
   */
   saveResource: function() {
-    var self = this,
-        isNew = (this.get('id') === undefined);
+    var self = this;
 
     if (this.validate !== undefined) {
       var error = this.validate();
@@ -135,7 +151,7 @@ Ember.Resource = Ember.Object.extend({
       url: this._resourceUrl(),
       data: this.serialize(),
       dataType: 'json',
-      type: (isNew ? 'POST' : 'PUT')
+      type: (this.isNew() ? 'POST' : 'PUT')
     }).done( function(json) {
       // Update properties
       if (json)
@@ -147,13 +163,18 @@ Ember.Resource = Ember.Object.extend({
     Delete resource via ajax
   */
   destroyResource: function() {
-    var self = this;
-
     return jQuery.ajax({
       url: this._resourceUrl(),
       dataType: 'json',
       type: 'DELETE'
     });
+  },
+
+  /**
+   Is this a new resource?
+  */
+  isNew: function() {
+    return (this._id() === undefined);
   },
 
   /**
@@ -164,12 +185,21 @@ Ember.Resource = Ember.Object.extend({
   */
   _resourceUrl: function() {
     var url = this.resourceUrl,
-        id = this.get('id');
+        id = this._id();
 
     if (id !== undefined)
       url += '/' + id;
 
     return url;
+  },
+
+  /**
+    @private
+
+    The id for this resource.
+  */
+  _id: function() {
+    return this.get('id');
   }
 });
 
@@ -191,7 +221,7 @@ Ember.ResourceController = Ember.ArrayController.extend({
   */
   init: function() {
     this._super();
-    this.set('content', []);
+    this.clearAll();
   },
 
   /**
@@ -211,6 +241,13 @@ Ember.ResourceController = Ember.ArrayController.extend({
   },
 
   /**
+    Clear this controller's contents (without deleting remote resources)
+  */
+  clearAll: function() {
+    this.set("content", []);
+  },
+
+  /**
     Replace this controller's contents with an ajax call to `url`
   */
   findAll: function() {
@@ -221,7 +258,7 @@ Ember.ResourceController = Ember.ArrayController.extend({
       dataType: 'json',
       type: 'GET'
     }).done( function(json) {
-      self.set("content", []);
+      self.clearAll();
       self.loadAll(json);
     });
   },
