@@ -10,6 +10,38 @@
 */
 
 /**
+  An adapter for performing resource requests
+
+  The default implementation is a thin wrapper around jQuery.ajax(). It is mixed in to both Ember.Resource
+  and Ember.ResourceController.
+
+  To override Ember.ResourceAdapter entirely, define your own version and include it before this module.
+
+  To override a portion of this adapter, reopen it directly or reopen a particular Ember.Resource or
+  Ember.ResourceController. You can override `_resourceRequest()` entirely, or just provide an implementation of
+  `_prepareResourceRequest(params)` to adjust request params before `jQuery.ajax(params)`.
+*/
+if (Ember.ResourceAdapter === undefined) {
+  Ember.ResourceAdapter = Ember.Mixin.create({
+    /**
+      @private
+
+      Performs an XHR request with `jQuery.ajax()`. Calls `_prepareResourceRequest(params)` if defined.
+    */
+    _resourceRequest: function(params) {
+      params.url = this._resourceUrl();
+      params.dataType = 'json';
+
+      if (this._prepareResourceRequest !== undefined) {
+        this._prepareResourceRequest(params);
+      }
+
+      return jQuery.ajax(params);
+    }
+  });
+}
+
+/**
   A model class for RESTful resources
 
   Extend this class and define the following properties:
@@ -109,24 +141,21 @@ Ember.Resource = Ember.Object.extend({
   },
 
   /**
-    Load via ajax and deserialize
+    Request resource and deserialize
 
     REQUIRED: `id`
   */
   findResource: function() {
     var self = this;
 
-    return jQuery.ajax({
-      url: this._resourceUrl(),
-      dataType: 'json',
-      type: 'GET'
-    }).done( function(json) {
-      self.deserialize(json);
-    });
+    return this._resourceRequest({type: 'GET'})
+      .done(function(json) {
+        self.deserialize(json);
+      });
   },
 
   /**
-    Create (if new) or update (if existing) record via ajax
+    Create (if new) or update (if existing) record
 
     Will call validate() if defined for this record
 
@@ -149,27 +178,19 @@ Ember.Resource = Ember.Object.extend({
       }
     }
 
-    return jQuery.ajax({
-      url: this._resourceUrl(),
-      data: this.serialize(),
-      dataType: 'json',
-      type: (this.isNew() ? 'POST' : 'PUT')
-    }).done( function(json) {
-      // Update properties
-      if (json)
-        self.deserialize(json);
-    });
+    return this._resourceRequest({type: this.isNew() ? 'POST' : 'PUT',
+                                  data: this.serialize()})
+      .done(function(json) {
+        // Update properties
+        if (json) self.deserialize(json);
+      });
   },
 
   /**
-    Delete resource via ajax
+    Delete resource
   */
   destroyResource: function() {
-    return jQuery.ajax({
-      url: this._resourceUrl(),
-      dataType: 'json',
-      type: 'DELETE'
-    });
+    return this._resourceRequest({type: 'DELETE'});
   },
 
   /**
@@ -203,7 +224,7 @@ Ember.Resource = Ember.Object.extend({
   _resourceId: function() {
     return this.get(this.resourceIdField);
   }
-});
+}, Ember.ResourceAdapter);
 
 /**
   A controller for RESTful resources
@@ -250,25 +271,22 @@ Ember.ResourceController = Ember.ArrayController.extend({
   },
 
   /**
-    Replace this controller's contents with an ajax call to `url`
+    Replace this controller's contents with an request to `url`
   */
   findAll: function() {
     var self = this;
 
-    return jQuery.ajax({
-      url: this._resourceUrl(),
-      dataType: 'json',
-      type: 'GET'
-    }).done( function(json) {
-      self.clearAll();
-      self.loadAll(json);
-    });
+    return this._resourceRequest({type: 'GET'})
+      .done(function(json) {
+        self.clearAll();
+        self.loadAll(json);
+      });
   },
 
   /**
     @private
 
-    Base URL for ajax calls
+    Base URL for requests
 
     Will use the `resourceUrl` set for this controller, or if that's missing,
     the `resourceUrl` specified for `resourceType`.
@@ -279,4 +297,4 @@ Ember.ResourceController = Ember.ArrayController.extend({
     else
       return this.resourceUrl;
   }
-});
+}, Ember.ResourceAdapter);
