@@ -1,5 +1,5 @@
 /**
- Ember-REST.js
+ Ember-REST.js 0.1.1
 
  A simple library for RESTful resources in Ember.js
 
@@ -65,7 +65,7 @@ if (Ember.ResourceAdapter === undefined) {
   * `deserializeProperty(prop, value)`
   * `validate()`
 */
-Ember.Resource = Ember.Object.extend({
+Ember.Resource = Ember.Object.extend(Ember.ResourceAdapter, Ember.Copyable, {
   resourceIdField: 'id',
   resourceUrl:     Ember.required(),
 
@@ -85,6 +85,20 @@ Ember.Resource = Ember.Object.extend({
       prop = props[i];
       this.set(prop, source.get(prop));
     }
+  },
+
+  /**
+    Create a copy of this resource
+
+    Needed to implement Ember.Copyable
+
+    REQUIRED: `resourceProperties`
+  */
+  copy: function(deep) {
+    var c = this.constructor.create();
+    c.duplicateProperties(this);
+    c.set(this.resourceIdField, this.get(this.resourceIdField));
+    return c;
   },
 
   /**
@@ -224,7 +238,7 @@ Ember.Resource = Ember.Object.extend({
   _resourceId: function() {
     return this.get(this.resourceIdField);
   }
-}, Ember.ResourceAdapter);
+});
 
 /**
   A controller for RESTful resources
@@ -236,7 +250,7 @@ Ember.Resource = Ember.Object.extend({
   * `resourceUrl` -- (optional) the base url of the resource (e.g. '/contacts/active');
        will default to the `resourceUrl` for `resourceType`
 */
-Ember.ResourceController = Ember.ArrayController.extend({
+Ember.ResourceController = Ember.ArrayController.extend(Ember.ResourceAdapter, {
   resourceType: Ember.required(),
 
   /**
@@ -292,9 +306,24 @@ Ember.ResourceController = Ember.ArrayController.extend({
     the `resourceUrl` specified for `resourceType`.
   */
   _resourceUrl: function() {
-    if (this.resourceUrl === undefined)
-      return this.get('resourceType').prototype.resourceUrl;
-    else
-      return this.resourceUrl;
+    if (this.resourceUrl === undefined) {
+      // If `resourceUrl` is not defined for this controller, there are a couple
+      // ways to retrieve it from the resource. If a resource has been instantiated,
+      // then it can be retrieved from the resource's prototype. Otherwise, we need
+      // to loop through the mixins for the prototype to get the resourceUrl.
+      var rt = this.get('resourceType');
+      if (rt.prototype.resourceUrl === undefined) {
+        for (var i = rt.PrototypeMixin.mixins.length - 1; i >= 0; i--) {
+          var m = rt.PrototypeMixin.mixins[i];
+          if (m.properties !== undefined && m.properties.resourceUrl !== undefined) {
+            return m.properties.resourceUrl;
+          }
+        }
+      }
+      else {
+        return rt.prototype.resourceUrl;
+      }
+    }
+    return this.resourceUrl;
   }
-}, Ember.ResourceAdapter);
+});
