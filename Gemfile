@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.2.3'
+gem 'rails', '3.2.6'
 gem 'sqlite3'
 
 # Gems used only for assets and not required
@@ -11,7 +11,7 @@ group :assets do
 end
 
 gem 'jquery-rails'
-gem 'ember-rails', '>= 0.4.0'
+gem 'ember-rails', '0.4.0'
 
 group :test do
   # Pretty printed test output
